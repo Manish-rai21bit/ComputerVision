@@ -1,30 +1,42 @@
 function  [R1 C1 R2 C2 R3 C3 R4 C4] = CameraPose(F, K)
 % [R1 C1 R2 C2 R3 C3 R4 C4] =
     E = ComputeEssentialMatrix(F, K);
-    t1 = null(E');
-    t2 = -null(E');
-%     t1 = [t1(1)/t1(3); t1(2)/t1(3); t1(3)/t1(3)];
+    [u d v] = svd(E);
+    d(1,1) = 1;
+    d(2,2) = 1;
+    d(3,3) = 0;
+    E = u*d*v';
     [U D V] = svd(E);
-    Ra = U*[0 -1 0; 1 0 0; 0 0 1]*V';
-    Rb = U*[0 1 0; -1 0 0; 0 0 1]*V';
+    W1 = [0 -1 0; 1 0 0; 0 0 1];
+    W2 = [0 1 0; -1 0 0; 0 0 1];
     
-%     if det(Ra) < 0
-%         t1 = -t1; 
-%         Ra = -Ra;
-%     end
-%     
-%     if det(Rb) < 0
-%         t2 = -t2; 
-%         Rb = -Rb;
-%     end
-    C1 = -Ra'*t1;
-    R1 = Ra;
-    C2 = -Ra'*t2;
-    R2 = Ra;
-    C3 = -Rb'*t1;
-    R3 = Rb;
-    C4 = -Rb'*t2;
-    R4 = Rb;
+    C1 = U(:,3);
+    R1 = U*W1*V';
+    if(det(R1)<0)
+        C1 = -C1;
+        R1 = -R1;
+    end
+
+    C2 = U(:,3);
+    R2 = U*W2*V';
+    if(det(R2)<0)
+        C2 = -C2;
+        R2 = -R2;
+    end
+
+    C3 = -U(:,3);
+    R3 = U*W1*V';
+    if(det(R3)<0)
+        C3 = -C3;
+        R3 = -R3;
+    end
+
+    C4 = -U(:,3);
+    R4 = U*W2*V';
+    if(det(R4)<0)
+        C4 = -C4;
+        R4 = -R4;
+    end    
     
     figure(1)
     DisplayCamera([0; 0; 0], eye(3), 1);
