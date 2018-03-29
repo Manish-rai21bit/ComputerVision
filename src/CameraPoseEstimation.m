@@ -1,0 +1,1 @@
+function [R, C, X] = CameraPoseEstimation(u1, u2)
