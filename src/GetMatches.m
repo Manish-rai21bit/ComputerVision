@@ -1,68 +1,178 @@
-function GetMatches(I1, I2)
-    [f1,d1] = vl_sift(im2single(rgb2gray(I1))) ; 
-    [f2,d2] = vl_sift(im2single(rgb2gray(I2))) ; 
+function [Mx, My] = GetMatches(I1, I2, I3, I4, I5, I6)
+run('/Users/manishrai/Documents/VLFEATROOT/toolbox/vl_setup')
 
-    % Matching from I1 to I2
-    % knnsearch(X,Y) finds the nearest neighbor in X for each point in Y...
-    % IDX is a column vector with my rows. Each row in IDX contains the index..
-    % of nearest neighbor in X for the corresponding row in Y.
-    [knn_i1Toi2, dist_i1Toi2] = knnsearch(d2', d1','dist','euclidean', 'k', 2);
-    f2_perm = f2( : , knn_i1Toi2(1, :)'); %permuting/rearranging/swapping columns
-    % fb_perm = fb_perm( : , 1:m);
+[f1,d1] = vl_sift(im2single(rgb2gray(I1))) ;
+[f2,d2] = vl_sift(im2single(rgb2gray(I2))) ;
+[f3,d3] = vl_sift(im2single(rgb2gray(I3))) ;
+[f4,d4] = vl_sift(im2single(rgb2gray(I4))) ;
+[f5,d5] = vl_sift(im2single(rgb2gray(I5))) ;
+[f6,d6] = vl_sift(im2single(rgb2gray(I6))) ;
 
-    [knn_i2Toi1, dist_i2Toi1] = knnsearch(d1', d2','dist','euclidean', 'k', 2);
-    f1_perm = f1( : , knn_i2Toi1(1, :)'); %permuting/rearranging/swapping columns
-    % fa_perm = fa_perm(:, 1:m);
+Mx = []; My = [];
 
-    % Bidirectional matching
-    Knn_dist = [knn_i1Toi2 dist_i1Toi2];
-    ratio = Knn_dist(:, 3)./Knn_dist(:, 4);
-    Knn_dist =[Knn_dist ratio];
-    A= [];
-    for i = 1:size(Knn_dist, 1)
-        if Knn_dist(i, 5)< 0.7
-         A = [A; i Knn_dist(i, :)];
-        end
+[Mx1, My1] = GetMatchesOnePairOnly(f3,d3, f1,d1);
+
+for i = 1:size(Mx1, 1)
+    if size(find(Mx == Mx1(i, 1)), 1) == 0
+        Mx = [Mx; Mx1(i, 1)];
     end
+end
 
-    A1 = A;
-    A1 = [A1(:, 1) A1(:, 2)];
+[Mx2, My2] = GetMatchesOnePairOnly(f3,d3, f2,d2);
 
-% ------------------------------------------------------------------------
-    Knn_dist = [knn_i2Toi1 dist_i2Toi1];
-    ratio = Knn_dist(:, 3)./Knn_dist(:, 4);
-    Knn_dist =[Knn_dist ratio];
-    A= [];
-    for i = 1:size(Knn_dist, 1)
-        if Knn_dist(i, 5)< 0.7
-            A = [A; i Knn_dist(i, :)];
-        end
+for i = 1:size(Mx2, 1)
+    if size(find(Mx == Mx2(i, 1)), 1) == 0
+        Mx = [Mx; Mx2(i, 1)];
     end
-    A2 = A;
+end
 
-    A2 = [A2(:, 2) A2(:, 1)];
+[Mx4, My4] = GetMatchesOnePairOnly(f3,d3, f4,d4);
 
-% -------------------------
-    [~,index_A1,index_A2] = intersect(A1,A2,'rows');
-    A1_hat = A1(index_A1, :); % matrix with first column from img1 and 2nd column from img2
+for i = 1:size(Mx4, 1)
+    if size(find(Mx == Mx4(i, 1)), 1) == 0
+        Mx = [Mx; Mx4(i, 1)];
+    end
+end
 
-% now refining the corresponding points with fundamental matrix
-    u = [f1(1, A1_hat(:, 1) ); f1(2, A1_hat(:, 1) )]';
-    v = [f2(1, A1_hat(:, 2) ); f2(2, A1_hat(:, 2) )]';
-    [F, n, inlier] = GetInliersRANSAC(u, v); % Computing the fundamental matrix 
+[Mx5, My5] = GetMatchesOnePairOnly(f3,d3, f5,d5);
 
-% final set of corresponding points after outlier removing 
-    u = u(inlier, :);
-    v = v(inlier, :);
-%% plot these points
-%     figure(1) ; clf ;
-%     imagesc(cat(2, I1, I2)) ;
-% % faHat = fa(:, 1:m);
-%     xa = u(:, 1)' ;
-%     xb = v(:, 1)' + size(I1,2) ;
-%     ya = u(:, 2)' ;
-%     yb = v(:, 2)' ;
-% 
-%     hold on ;
-%     h = line([xa ; xb], [ya ; yb]) ;
-%     set(h,'linewidth', 1, 'color', 'r') ;
+for i = 1:size(Mx5, 1)
+    if size(find(Mx == Mx5(i, 1)), 1) == 0
+        Mx = [Mx; Mx5(i, 1)];
+    end
+end
+
+[Mx6, My6] = GetMatchesOnePairOnly(f3,d3, f6,d6);
+
+for i = 1:size(Mx6, 1)
+    if size(find(Mx == Mx6(i, 1)), 1) == 0
+        Mx = [Mx; Mx6(i, 1)];
+    end
+end
+
+Mx = [Mx zeros(size(Mx, 1), 1) zeros(size(Mx, 1),1) zeros(size(Mx, 1), 1) zeros(size(Mx, 1), 1) zeros(size(Mx, 1), 1)];
+
+
+% filling other columns of Mx
+%Mx1
+for i = 1:size(Mx1, 1)
+    if size(find(Mx(:, 1) ==  Mx1(i, 1)), 1) ~= 0
+        Index = find(Mx(:, 1) ==  Mx1(i, 1));
+        Mx(Index, 2) = Mx1(i, 2);
+    end
+end
+%Mx2
+for i = 1:size(Mx2, 1)
+    if size(find(Mx(:, 1) ==  Mx2(i, 1)), 1) ~= 0
+        Index = find(Mx(:, 1) ==  Mx2(i, 1));
+        Mx(Index, 3) = Mx2(i, 2);
+    end
+end
+
+% Mx4
+for i = 1:size(Mx4, 1)
+    if size(find(Mx(:, 1) ==  Mx4(i, 1)), 1) ~= 0
+        Index = find(Mx(:, 1) ==  Mx4(i, 1));
+        Mx(Index, 4) = Mx4(i, 2);
+    end
+end
+
+% Mx5
+for i = 1:size(Mx5, 1)
+    if size(find(Mx(:, 1) ==  Mx5(i, 1)), 1) ~= 0
+        Index = find(Mx(:, 1) ==  Mx5(i, 1));
+        Mx(Index, 5) = Mx5(i, 2);
+    end
+end
+
+% Mx6
+for i = 1:size(Mx6, 1)
+    if size(find(Mx(:, 1) ==  Mx6(i, 1)), 1) ~= 0
+        Index = find(Mx(:, 1) ==  Mx6(i, 1));
+        Mx(Index, 6) = Mx6(i, 2);
+    end
+end
+
+Mx = Mx(:, [2,3,1,4,5,6]);
+
+
+%% My
+
+
+for i = 1:size(My1, 1)
+    if size(find(My == My1(i, 1)), 1) == 0
+        My = [My; My1(i, 1)];
+    end
+end
+
+
+
+for i = 1:size(My2, 1)
+    if size(find(My == My2(i, 1)), 1) == 0
+        My = [My; My2(i, 1)];
+    end
+end
+
+for i = 1:size(My4, 1)
+    if size(find(My == My4(i, 1)), 1) == 0
+        My = [My; My4(i, 1)];
+    end
+end
+
+
+for i = 1:size(My5, 1)
+    if size(find(My == My5(i, 1)), 1) == 0
+        My = [My; My5(i, 1)];
+    end
+end
+
+
+for i = 1:size(My6, 1)
+    if size(find(My == My6(i, 1)), 1) == 0
+        My = [My; My6(i, 1)];
+    end
+end
+
+
+My = [My zeros(size(My, 1), 1) zeros(size(My, 1),1) zeros(size(My, 1), 1) zeros(size(My, 1), 1) zeros(size(My, 1), 1)];
+% filling other columns of My
+%My1
+for i = 1:size(My1, 1)
+    if size(find(My(:, 1) ==  My1(i, 1)), 1) ~= 0
+        Index = find(My(:, 1) ==  My1(i, 1));
+        My(Index, 2) = My1(i, 2);
+    end
+end
+%My2
+for i = 1:size(My2, 1)
+    if size(find(My(:, 1) ==  My2(i, 1)), 1) ~= 0
+        Index = find(My(:, 1) ==  My2(i, 1));
+        My(Index, 3) = My2(i, 2);
+    end
+end
+
+% My4
+for i = 1:size(My4, 1)
+    if size(find(My(:, 1) ==  My4(i, 1)), 1) ~= 0
+        Index = find(My(:, 1) ==  My4(i, 1));
+        My(Index, 4) = My4(i, 2);
+    end
+end
+
+% My5
+for i = 1:size(My5, 1)
+    if size(find(My(:, 1) ==  My5(i, 1)), 1) ~= 0
+        Index = find(My(:, 1) ==  My5(i, 1));
+        My(Index, 5) = My5(i, 2);
+    end
+end
+
+% My6
+for i = 1:size(My6, 1)
+    if size(find(My(:, 1) ==  My6(i, 1)), 1) ~= 0
+        Index = find(My(:, 1) ==  My6(i, 1));
+        My(Index, 6) = My6(i, 2);
+    end
+end
+
+My = My(:, [2,3,1,4,5,6]);

@@ -1,13 +1,10 @@
-function PnPRANSAC(X, u)
-
-f = 2682/4;
-K = [f 0 816;
-    0 f 612;
-    0 0 1];
-
-nInliers = 0;
-threshold = 100;
+function [R, C] = PnPRANSAC(u, X)
+K = eye(3);
+% nInliers = 0;
+threshold = 50;
 n = 0;
+R = [];
+t = [];
 M = 100;
 for i = 1:M
     n1 = 0;
@@ -18,7 +15,7 @@ for i = 1:M
     tr = -Rr*Cr;
     % Compute the number of inliers
     Pr = K*[Rr tr];
-    uhat = Pr*[X ones(size(X, 1), 1)]';
+    uhat = Pr*[X]';
     uhat = bsxfun(@rdivide,uhat,uhat(3,:));
     uhat = uhat';
     uhat = [uhat(:, 1) uhat(:, 2)];
@@ -29,9 +26,10 @@ for i = 1:M
         end
     end
     
-    if n > n1
+    if n1 > n
         n = n1;
         R = Rr;
         t = tr;
     end
+    C = -R'*t;
 end
